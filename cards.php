@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<?php
+session_start();
+
+include 'config.php';
+// Create an array to store all Books and their lessons
+$query = "SELECT `COL 7`, `COL 8`, COUNT(`COL 1`) as card_count 
+              FROM `woerter_txt` 
+              WHERE language = 'de' 
+              GROUP BY `COL 7`, `COL 8` 
+              ORDER BY `COL 7`, `COL 8`";
+$result = mysqli_query($db, $query);
+echo "<script>booksAndLessons = Array();</script>";
+$c = 0;
+// Adds Books and Lessons to the 'booksAndLessons' array
+while ($r = mysqli_fetch_array($result)) {
+    // Create an array with book, lesson, and count
+    $lesson_data = array(
+        'book' => $r['COL 7'],
+        'lesson' => $r['COL 8'],
+        'count' => $r['card_count']
+    );
+    echo "<script>booksAndLessons[$c]=" . json_encode($lesson_data) . ";</script>";
+    $c++;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $token = $_GET['token'] ?? null;
+    if ($token !== null) {
+        $accessCheck = "SELECT * FROM `users` WHERE `token`= ?;";
+        $stmt = mysqli_prepare($db, $accessCheck);
+        mysqli_stmt_bind_param($stmt, 's', $token);
+        mysqli_stmt_execute($stmt);
+        $acsChk = mysqli_stmt_get_result($stmt);
+
+        if (mysqli_num_rows($acsChk) > 0) {
+            $editor = mysqli_fetch_array($acsChk);
+            $_SESSION['editor'] = $editor[0];   // set once, server-side
+            $_SESSION['user_id'] = $editor['id'] ?? null; // adjust to your actual column
+        }
+    }
+    // Default if no valid token was ever provided this session
+    if (!isset($_SESSION['editor'])) {
+        $_SESSION['editor'] = 'user';
+    }
+}
+?>
+
+<head>
+    <title>Ebrahim's Flash Cards!</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">-->
+    <link href="/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+</head>
+
+<body dir="rtl">
+    <div class="container" style="margin:2rem">
+        <form action='practice.php' method='POST'>
+            <div class="row">
+                <div class="col-lg-3"></div>
+                <div class="col-lg-6">
+                    <h1><img src="../book/img/Logo_AbeLing.png" width="70"> فلش کارت های آبلینگ</h1>
+                    <hr>
+                    <h2>یک کتاب انتخاب کنید:</h2>
+
+                    <select class="form-select form-select-lg bg-primary" name='buch' onchange='setLektion(this.value)' dir="ltr">
+                        <?php
+                        $sql = "SELECT * FROM `woerter_txt` WHERE language = 'de' GROUP BY `COL 7` ORDER BY `COL 7`;";
+                        $r = mysqli_query($db, $sql);
+                        while ($row = mysqli_fetch_array($r)) {
+                            echo "<option class='bg-primary' value='" . htmlspecialchars($row[6]) . "'>" . htmlspecialchars($row[6]) . "</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="col-lg-3"></div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3"></div>
+                <div class="col-lg-6">
+                    <h2>یک درس یا فصل انتخاب کنید:</h2>
+
+                    <select class="form-select form-select-lg bg-primary" name='lektion' id='lektion' dir="ltr">
+                        <!-- Options will add by JS -->
+                    </select>
+                    <script>
+                        setLektion('Deutsch in der Firma');
+
+                        function setLektion(selectedBook) {
+                            removeOptions('lektion');
+                            var lektion = document.getElementById('lektion');
+
+                            for (var j = 0; j < booksAndLessons.length; j++) {
+                                if (selectedBook == booksAndLessons[j].book) {
+                                    var opt = document.createElement('option');
+                                    opt.value = booksAndLessons[j].lesson;
+                                    // نمایش نام درس به همراه تعداد کارت‌ها
+                                    opt.innerHTML = booksAndLessons[j].lesson + ' (' + booksAndLessons[j].count + ' cards)';
+                                    lektion.appendChild(opt);
+                                }
+                            }
+                        }
+
+                        function removeOptions(selectedElement) {
+                            // Removes all Option tags from chosen Select tag
+                            var selectElement = document.getElementById(selectedElement);
+                            var i, L = selectElement.options.length - 1;
+                            for (i = L; i >= 0; i--) {
+                                selectElement.remove(i);
+                            }
+                        }
+                    </script>
+                </div>
+                <div class="col-lg-3"></div>
+            </div>
+            <div class="row">
+                <div class="col-4 col-lg-3"></div>
+                <div class="form-check form-switch col-4 col-lg-3" style="margin:1rem 0px 1rem 0px; text-align:center;">
+                    <input class="form-check-input" type="checkbox" id="mySwitch" name="verb" value="no">
+                    <label class="form-check-label" for="mySwitch" title="فقط فعل ها">فقط فعل ها</label>
+                </div>
+                <div class="form-check form-switch col-4 col-lg-3" style="margin:1rem 0px 1rem 0px; text-align:center;">
+                    <input class="form-check-input" type="checkbox" id="mySwitch2" name="shuffle" value="yes" checked>
+                    <label class="form-check-label" for="mySwitch2" title="بر زدن">بُر زدن</label>
+                </div>
+                <div class="col-4 col-lg-3"></div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3"></div>
+                <div class="d-grid gap-2 col-lg-6">
+                    <input type='hidden' name='language' value='de'>
+                    <input type='submit' class='btn btn-lg bg-success' name='chooseCardSet' value='Start'>
+                </div>
+                <div class="col-lg-3"></div>
+            </div>
+        </form>
+        <div class="row">
+            <a href="index1.php" style="text-align:center; margin-top:1rem;">درباره</a>
+        </div>
+        <div class="row">
+            <a href="https://t.me/ebrahimsflashcards" style="text-align:center; margin-top:1rem;">Telegram</a>
+        </div>
+        <div class="row">
+            <a href="https://abeling.ir/book" style="text-align:center; margin-top:1rem;">خرید کتاب</a>
+        </div>
+    </div>
+    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>-->
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
