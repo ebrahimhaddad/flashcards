@@ -27,18 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($checkVerb == "no") $verb = " AND `COL 2`='(Verb)'";
 else $verb = "";
 
-if ($lang === 'es') {
-    $query = "SELECT * FROM `Vocabulario` WHERE `COL 7` = ? AND `COL 8` = ?" . $verb;
-} else {
-    $query = "SELECT * FROM `woerter_txt` WHERE `COL 7` = ? AND `COL 8` = ? AND `language` = ?" . $verb;
-}
+$query = "SELECT * FROM `woerter_txt` WHERE `COL 7` = ? AND `COL 8` = ? AND `language` = ?" . $verb;
+
 
 $stmt = mysqli_prepare($db, $query);
-if ($lang === 'es') {
-    mysqli_stmt_bind_param($stmt, 'ss', $book, $lesson);
-} else {
-    mysqli_stmt_bind_param($stmt, 'sss', $book, $lesson, $lang);
-}
+mysqli_stmt_bind_param($stmt, 'sss', $book, $lesson, $lang);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
@@ -180,8 +173,7 @@ $url = mysqli_fetch_array($urlResult);
                         </script>";
                         ?>
                         <p class="bg-light m-1">
-                            <?php if ($lang === 'es') echo '<a href="espanol.php">More vocabularies</a>';
-                            else echo '<a href="cards.php">More vocabularies</a>'; ?>
+                            <a href="cards.php">More vocabularies</a>
                         </p>
                         <p class="bg-light m-1">
                             <a href="index1.php">صفحه اصلی</a>

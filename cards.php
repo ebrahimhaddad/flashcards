@@ -6,11 +6,10 @@ include 'config.php';
 $editor = current_editor(); // 'user' if not logged in, or the editor's email if a valid JWT cookie is present
 
 // Create an array to store all Books and their lessons
-$query = "SELECT `COL 7`, `COL 8`, COUNT(`COL 1`) as card_count 
-              FROM `woerter_txt` 
-              WHERE language = 'de' 
-              GROUP BY `COL 7`, `COL 8` 
-              ORDER BY `COL 7`, `COL 8`";
+$query = "SELECT `COL 7`, `COL 8`, `language`, COUNT(`COL 1`) as card_count 
+          FROM `woerter_txt` 
+          GROUP BY `COL 7`, `COL 8`, `language` 
+          ORDER BY `language`, `COL 7`, `COL 8`";
 $result = mysqli_query($db, $query);
 echo "<script>booksAndLessons = Array();</script>";
 $c = 0;
@@ -18,9 +17,10 @@ while ($r = mysqli_fetch_array($result)) {
     $lesson_data = array(
         'book' => $r['COL 7'],
         'lesson' => $r['COL 8'],
+        'language' => $r['language'],
         'count' => $r['card_count']
     );
-    echo "<script>booksAndLessons[$c]=" . json_encode($lesson_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) . ";</script>";
+    echo "<script>booksAndLessons[$c]=" . json_encode($lesson_data) . ";</script>";
     $c++;
 }
 ?>
@@ -41,17 +41,17 @@ while ($r = mysqli_fetch_array($result)) {
                 <div class="col-lg-6">
                     <h1><img src="../book/img/Logo_AbeLing.png" width="70"> فلش کارت های آبلینگ</h1>
                     <hr>
+                    <select class="form-select form-select-lg bg-primary" name='language' id='language' onchange='setBook(this.value)' dir="ltr">
+                        <option value="de">Deutsch - آلمانی</option>
+                        <option value="es">Español - اسپانیایی</option>
+                    </select>
                     <h2>یک کتاب انتخاب کنید:</h2>
 
-                    <select class="form-select form-select-lg bg-primary" name='buch' onchange='setLektion(this.value)' dir="ltr">
-                        <?php
-                        $sql = "SELECT * FROM `woerter_txt` WHERE language = 'de' GROUP BY `COL 7` ORDER BY `COL 7`;";
-                        $r = mysqli_query($db, $sql);
-                        while ($row = mysqli_fetch_array($r)) {
-                            echo "<option class='bg-primary' value='" . htmlspecialchars($row[6]) . "'>" . htmlspecialchars($row[6]) . "</option>";
-                        }
-                        ?>
+                    <select class="form-select form-select-lg bg-primary" name='buch' id='buch' onchange='setLektion(this.value)' dir="ltr">
+                        <!-- Options added by JS -->
                     </select>
+
+
                 </div>
                 <div class="col-lg-3"></div>
             </div>
@@ -64,13 +64,30 @@ while ($r = mysqli_fetch_array($result)) {
                         <!-- Options will add by JS -->
                     </select>
                     <script>
-                        setLektion('ECL Band 1');
+                        setBook('de');
+
+                        function setBook(selectedLanguage) {
+                            removeOptions('buch');
+                            var buch = document.getElementById('buch');
+                            var addedBooks = [];
+                            for (var j = 0; j < booksAndLessons.length; j++) {
+                                if (booksAndLessons[j].language == selectedLanguage && addedBooks.indexOf(booksAndLessons[j].book) === -1) {
+                                    var opt = document.createElement('option');
+                                    opt.value = booksAndLessons[j].book;
+                                    opt.innerHTML = booksAndLessons[j].book;
+                                    buch.appendChild(opt);
+                                    addedBooks.push(booksAndLessons[j].book);
+                                }
+                            }
+                            setLektion(buch.value);
+                        }
 
                         function setLektion(selectedBook) {
                             removeOptions('lektion');
                             var lektion = document.getElementById('lektion');
+                            var selectedLanguage = document.getElementById('language').value;
                             for (var j = 0; j < booksAndLessons.length; j++) {
-                                if (selectedBook == booksAndLessons[j].book) {
+                                if (selectedBook == booksAndLessons[j].book && selectedLanguage == booksAndLessons[j].language) {
                                     var opt = document.createElement('option');
                                     opt.value = booksAndLessons[j].lesson;
                                     opt.innerHTML = booksAndLessons[j].lesson + ' (' + booksAndLessons[j].count + ' cards)';
@@ -105,7 +122,6 @@ while ($r = mysqli_fetch_array($result)) {
             <div class="row">
                 <div class="col-lg-3"></div>
                 <div class="d-grid gap-2 col-lg-6">
-                    <input type='hidden' name='language' value='de'>
                     <input type='submit' class='btn btn-lg bg-success' name='chooseCardSet' value='Start'>
                 </div>
                 <div class="col-lg-3"></div>
@@ -128,7 +144,8 @@ while ($r = mysqli_fetch_array($result)) {
             <?php endif; ?>
         </div>
     </div>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script> -->
+
 </body>
 
 </html>
