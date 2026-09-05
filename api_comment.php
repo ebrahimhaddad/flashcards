@@ -1,23 +1,29 @@
 <?php
-session_start();
-header("Access-Control-Allow-Origin: https://abeling.ir/flash");
+header("Access-Control-Allow-Origin: https://abeling.ir");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	include 'config.php'; // provides $pdo, current_editor(), verify_csrf_token()
 
-	// Authorization check, this is the actual security boundary.
-	// Anyone can POST here directly; the session is the only thing
-	// that proves the request came from a validated editor.
-	$editor = $_SESSION['editor'] ?? 'user';
+	// Authorization, the actual security boundary. Anyone can POST here
+	// directly; the JWT cookie is the only thing that proves this request
+	// came from a logged-in editor.
+	$editor = current_editor();
 	if ($editor === 'user') {
 		http_response_code(403);
 		echo json_encode(['error' => 'دسترسی غیرمجاز']);
 		exit;
 	}
 
-	include 'config.php';
+	// CSRF check — confirms the request came from our own form, not a
+	// forged cross-site submission riding on the editor's cookies.
+	if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+		http_response_code(403);
+		echo json_encode(['error' => 'درخواست نامعتبر']);
+		exit;
+	}
 
 	try {
 		$word      = htmlspecialchars($_POST['word'] ?? '', ENT_QUOTES, 'UTF-8');
@@ -46,8 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			'id' => $pdo->lastInsertId()
 		]);
 
-		// Email subject/body now use the sanitized variables, not raw $_POST,
-		// and $editor comes from the session so it can't contain attacker-controlled newlines.
 		$subject = "A new edit from " . $editor . "!";
 		$body = $editor . " sent a comment on " . $book . " - " . $lesson .
 			". He/She says '" . $comment . "' about the word: " . $word;

@@ -1,8 +1,7 @@
 <?php
-session_start();
 include 'config.php';
 
-$editor = $_SESSION['editor'] ?? "user";
+$editor = current_editor(); // 'user' if not logged in, or the editor's email
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $book = $_POST['buch'];
@@ -12,14 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lang = $_POST['language'];
     // $editor no longer comes from $_POST
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $book = $_GET['buch'] ?? "Deutsch in der Firma";
-    $lesson = $_GET['lektion'] ?? "01. Das Vorstellungsgespräch";
+    $book = $_GET['buch'] ?? "ECL Band 1";
+    $lesson = $_GET['lektion'] ?? "1";
     $shuffle = $_GET['shuffle'] ?? "yes";
     $checkVerb = $_GET['verb'] ?? "yes";
     $lang = $_GET['language'] ?? "de";
 } else {
-    $book = "Deutsch in der Firma";
-    $lesson = "01. Das Vorstellungsgespräch";
+    $book = "ECL Band 1";
+    $lesson = "1";
     $shuffle = "yes";
     $checkVerb = "yes";
     $lang = 'de';
@@ -47,7 +46,7 @@ echo "<script>jsarray = Array(); pageIndex = 0; statt = 0;";
 $c = 0;
 // Adds words to the 'jsarray' array
 while ($r = mysqli_fetch_array($result)) {
-    echo "jsarray[$c]=" . json_encode($r) . ";";
+    echo "jsarray[$c]=" . json_encode($r, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) . ";";
     $c++;
 }
 // Shuffle the words in the array
@@ -67,12 +66,14 @@ $url = mysqli_fetch_array($urlResult);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ebrahim&apos;s Flash Cards - <?= htmlspecialchars($book) ?></title>
     <link rel="stylesheet" href="practice.css">
+
+    <title>Ebrahim&apos;s Flash Cards - <?= htmlspecialchars($book) ?></title>
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
     <!-- Bootstrap 5.3.3 CSS -->
-    <!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">-->
-    <link href="/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!--<link href="/bootstrap/bootstrap.min.css" rel="stylesheet">-->
+
 </head>
 
 <body style="background-image: url('img/books/<?= htmlspecialchars($url[1]) ?>');">
@@ -89,6 +90,11 @@ $url = mysqli_fetch_array($urlResult);
             setTimeout(hideLoading, 1500);
         }
         document.onkeydown = function(e) {
+            const tag = e.target.tagName;
+            const isEditableField = (tag === 'TEXTAREA' || tag === 'INPUT') && !e.target.readOnly;
+
+            if (isEditableField) return; // let arrow keys behave normally while typing
+
             switch (e.keyCode) {
                 case 39:
                     next();
@@ -104,6 +110,7 @@ $url = mysqli_fetch_array($urlResult);
     </script>
     <div class="container-fluid min-vh-100 d-flex align-items-center">
         <form method="POST" id="myForm">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_COOKIE['csrf_token']) ?>">
             <div class="row w-100">
                 <!-- Left Column -->
                 <div class="col-md-6 colbg d-flex justify-content-center align-items-center py-1">
@@ -194,10 +201,11 @@ $url = mysqli_fetch_array($urlResult);
         </form>
     </div>
 
-    <script src="practice.js"></script>
     <!-- Bootstrap 5.3.3 JS Bundle with Popper -->
-    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>-->
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!--<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>-->
+    <script src="practice.js"></script>
+
     <?php
     if ($editor !== null && $editor !== "user") echo "<script>lockArtikel()</script>";
     ?>
