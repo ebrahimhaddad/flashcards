@@ -3,10 +3,7 @@
 // Database credentials — fill these in, then save this file as config.php
 // (config.php is git-ignored and must never be committed)
 // ---------------------------------------------------------------------
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'put db name here');
-define('DB_USER', 'put db user here');
-define('DB_PASS', 'put db password here');
+include 'db-credentials.php';
 
 // mysqli connection — used by cards.php and practice.php
 $db = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
