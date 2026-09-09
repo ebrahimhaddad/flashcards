@@ -35,11 +35,16 @@ while ($r = mysqli_fetch_array($result)) {
 
 <body dir="rtl">
     <div class="container" style="margin:2rem">
+        <div class="alert alert-warning text-center" role="alert" style="margin: .6rem;">
+            <p>این یک نسخه نمایشی است و شامل تعداد محدودی از کتاب‌ها و درس‌ها می‌باشد.</p>
+            <p dir="ltr">This is a demo version and includes a limited number of books and lessons.</p>
+            <p dir="ltr">Esta es una versión de demostración e incluye un número limitado de libros y lecciones.</p>
+        </div>
         <form action='practice.php' method='POST'>
             <div class="row">
                 <div class="col-lg-3"></div>
                 <div class="col-lg-6">
-                    <h1><img src="../book/img/Logo_AbeLing.png" width="70"> فلش کارت های آبلینگ</h1>
+                    <h1><img src="../flash/img/Logo_AbeLing.png" width="70"> فلش کارت های آبلینگ</h1>
                     <hr>
                     <select class="form-select form-select-lg bg-primary" name='language' id='language' onchange='setBook(this.value)' dir="ltr">
                         <option value="de">Deutsch - آلمانی</option>
@@ -131,9 +136,6 @@ while ($r = mysqli_fetch_array($result)) {
             <a href="index1.php" style="text-align:center; margin-top:1rem;">درباره</a>
         </div>
         <div class="row">
-            <a href="https://t.me/ebrahimsflashcards" style="text-align:center; margin-top:1rem;">Telegram</a>
-        </div>
-        <div class="row">
             <a href="https://abeling.ir/book" style="text-align:center; margin-top:1rem;">خرید کتاب</a>
         </div>
         <div class="row">
@@ -142,6 +144,9 @@ while ($r = mysqli_fetch_array($result)) {
             <?php else: ?>
                 <span style="text-align:center; margin-top:1rem;">خوش آمدید, <?= htmlspecialchars($editor) ?> | <a href="logout.php">خروج</a></span>
             <?php endif; ?>
+        </div>
+        <div class="row">
+            <a href="https://t.me/ebrahimsflashcards" style="text-align:center; margin-top:1rem;">Telegram</a>
         </div>
     </div>
     <!-- <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script> -->
