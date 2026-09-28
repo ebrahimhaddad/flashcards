@@ -10,7 +10,7 @@ Live at: https://t.me/ebrahimsflashcards
 
 The project started as a simple tool to review vocabulary, word, part of speech, article (for nouns), plural form, synonym/antonym, Persian translation, and an example sentence, from German course books. As classmates and other learners started using it, some offered to help expand the word list, which grew into a moderated volunteer-contribution workflow with teacher-editors reviewing submissions before publication.
 
-It's built and maintained solo, alongside other work, and several parts (the volunteer panel, gamification, messaging) are intentionally incomplete, see [`ADR.md`](./ADR.md) for the full history of what's built, what's partial, and why specific design choices were made.
+It's built and maintained solo, alongside other work, and several parts (the volunteer panel, gamification, messaging) are intentionally incomplete, see [`ADR.md`](./adr.md) for the full history of what's built, what's partial, and why specific design choices were made.
 
 ## Features
 
